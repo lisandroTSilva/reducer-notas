@@ -13,13 +13,13 @@ function getDados(): IReducerState {
                 id: 1,
                 descricao: "1º Bimestre",
                 fechado: true,
-                valor: 5.3
+                valor: 5
             },
             {
                 id: 2,
                 descricao: "2º Bimestre",
                 fechado: true,
-                valor: 8.3
+                valor: 5
             },
             {
                 id: 3,
@@ -63,6 +63,8 @@ export default function App() {
                         <label> {periodo.valor} </label>
                         <input
                             value={periodo.valor}
+                            type="number"
+                            disabled={periodo.fechado}
                             onChange={(e) => {
                                 dispatch({
                                     type: "UPDATE_PERIODO",
@@ -76,6 +78,21 @@ export default function App() {
                     </div>
                 )
             })}
+
+            {state.mostraExame && <strong>Editado</strong>}
+
+            <label> Exame {state.exame.valor}</label>
+            <input
+                value={state.exame.valor}
+                type="number"
+                disabled={state.exame.fechado}
+                onChange={(e) => {
+                    dispatch({
+                        type: "UPDATE_EXAME",
+                        payload: e.target.value
+                    })
+                }}
+            />
 
             <div>Media: {state?.media}</div>
             <div>Situacao: {state?.situacao}</div>

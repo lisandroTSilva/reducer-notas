@@ -1,4 +1,13 @@
-export const INITIAL_STATE = {} as IReducerState
+export const INITIAL_STATE = {
+    periodos: [],
+    exame: {
+        fechado: false,
+        valor: 0
+    },
+    mostraExame: false,
+    media: 0,
+    situacao: ""
+}
 
 export interface IPeriodo {
     id: number
@@ -16,44 +25,40 @@ export interface IReducerState {
     periodos: IPeriodo[]
     exame: IExame
     media: number
+    mostraExame: boolean
     situacao: string
 }
 
-function updateMedia(newState: IReducerState, periodos: IPeriodo[]) {
-    newState.media =
-        periodos.reduce((acc: any, prev: any) => acc + prev.valor, 0) /
-        periodos.length
+function updateMedia(
+    newState: IReducerState,
+    periodos: IPeriodo[],
+    exame: number | null = null
+) {
+    const total = periodos.reduce((prev, cur) => prev + cur.valor, 0)
 
-    if (newState.media) {
-        if (newState.media >= 7) {
-            newState.situacao = "Aprovado"
-            newState.exame.valor = "--"
-        } else {
-            newState.situacao = "Exame"
-            let exame = 0
-            if (periodos.length > 2) {
-                exame =
-                    (50 -
-                        1.5 *
-                            (periodos[0].valor +
-                                periodos[1].valor +
-                                periodos[2].valor +
-                                periodos[3].valor)) /
-                        4 +
-                    0.04
-                console.log("exame", exame)
-                newState.exame.valor = parseFloat(exame.toFixed(1))
-            } else {
-                exame =
-                    (50 - 3 * (periodos[0].valor + periodos[1].valor)) / 4 +
-                    0.04
-                console.log("exame", exame)
-                newState.exame.valor = parseFloat(exame.toFixed(1))
-            }
-        }
+    newState.media = total / periodos.length
+
+    newState.exame.valor = ""
+
+    if (newState.media >= 7) {
+        newState.situacao = "Aprovado"
+        newState.exame.valor = "--"
     } else {
-        newState.exame.valor = ""
-        newState.media = 0
+        newState.situacao = "Exame"
+
+        // @TODO Verificar essa lógica
+        const multiplicador = periodos.length > 2 ? 1.5 : 3
+
+        if (exame === null) {
+            exame = (50 - multiplicador * total) / 4 + 0.04
+        }
+
+        newState.exame.valor = Number(exame)
+        newState.media = (total + newState.exame.valor) / (periodos.length + 1)
+
+        if (newState.media >= 5) {
+            newState.situacao = "Aprovado"
+        }
     }
 
     return { ...newState, periodos }
@@ -70,7 +75,9 @@ export function notasReducer(
 
     switch (action.type) {
         case "LOAD_NOTAS":
-            return updateMedia(action.payload, [...action.payload.periodos])
+            return updateMedia({ ...action.payload, mostraExame: false }, [
+                ...action.payload.periodos
+            ])
 
         case "UPDATE_PERIODO":
             const newPeriodos = newState.periodos.map((p) => {
@@ -79,10 +86,14 @@ export function notasReducer(
                 }
                 return p
             })
-            return updateMedia(newState, newPeriodos)
+            return updateMedia({ ...newState, mostraExame: true }, newPeriodos)
 
         case "UPDATE_EXAME":
-            return newState
+            return updateMedia(
+                { ...newState, mostraExame: true },
+                newState.periodos,
+                action.payload
+            )
     }
 
     return newState
