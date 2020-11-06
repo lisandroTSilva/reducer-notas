@@ -18,46 +18,39 @@ export interface IPeriodo {
 
 interface IExame {
     fechado: boolean
-    valor: any
+    valor: number
 }
 
 export interface IReducerState {
     periodos: IPeriodo[]
     exame: IExame
     media: number
-    mostraExame: boolean
     situacao: string
 }
 
-function updateMedia(
-    newState: IReducerState,
-    periodos: IPeriodo[],
-    exame: number | null = null
-) {
+function updateMedia(newState: IReducerState, periodos: IPeriodo[]) {
     const total = periodos.reduce((prev, cur) => prev + cur.valor, 0)
 
     newState.media = total / periodos.length
 
-    newState.exame.valor = ""
+    const multiplicador = periodos.length > 2 ? 1.5 : 3
+    const calculoExame = (50 - multiplicador * total) / 4 + 0.04
 
-    if (newState.media >= 7) {
+    let aprovadoComExame = false
+    if (newState.exame.fechado && newState.exame.valor >= calculoExame) {
+        aprovadoComExame = true
+    }
+
+    if (newState.media >= 7 || aprovadoComExame) {
         newState.situacao = "Aprovado"
-        newState.exame.valor = "--"
+        newState.exame.valor = 0
     } else {
-        newState.situacao = "Exame"
-
-        // @TODO Verificar essa lógica
-        const multiplicador = periodos.length > 2 ? 1.5 : 3
-
-        if (exame === null) {
-            exame = (50 - multiplicador * total) / 4 + 0.04
-        }
-
-        newState.exame.valor = Number(exame)
-        newState.media = (total + newState.exame.valor) / (periodos.length + 1)
-
-        if (newState.media >= 5) {
-            newState.situacao = "Aprovado"
+        if (newState.exame.fechado || calculoExame > 10) {
+            newState.situacao = "Reprovado"
+            newState.exame.valor = calculoExame
+        } else {
+            newState.situacao = "Exame"
+            newState.exame.valor = calculoExame
         }
     }
 
@@ -75,7 +68,7 @@ export function notasReducer(
 
     switch (action.type) {
         case "LOAD_NOTAS":
-            return updateMedia({ ...action.payload, mostraExame: false }, [
+            return updateMedia({ ...action.payload }, [
                 ...action.payload.periodos
             ])
 
@@ -86,14 +79,41 @@ export function notasReducer(
                 }
                 return p
             })
-            return updateMedia({ ...newState, mostraExame: true }, newPeriodos)
+            return updateMedia({ ...newState }, newPeriodos)
 
-        case "UPDATE_EXAME":
-            return updateMedia(
-                { ...newState, mostraExame: true },
-                newState.periodos,
-                action.payload
-            )
+        // case "UPDATE_EXAME":
+        // return updateMedia(
+        //     { ...newState, mostraExame: true },
+        //     newState.periodos,
+        //     action.payload
+        // )
+        // newState.exame.valor = action.payload
+        // if (newState.exame.valor > newState.exame.minimo) {
+        //     newState.situacao = "Aprovado"
+        // } else {
+        //     newState.situacao = "Reprovado"
+        // }
+
+        // const notasFixas = newState.periodos.reduce(
+        //     (prev, cur) => (cur.fechado ? prev + cur.valor : prev),
+        //     0
+        // )
+
+        // const multiplicador = newState.periodos.length > 2 ? 1.5 : 3
+
+        // const quantoFalta =
+        //     (newState.exame.valor * (4 + 0.04) - 50) / (multiplicador * -1)
+
+        // const qtdFechadas = newState.periodos.reduce(
+        //     (prev, cur) => (cur.fechado ? prev + 1 : prev),
+        //     0
+        // )
+
+        // console.log("qtdAbertas", newState.periodos.length - qtdFechadas)
+        // console.log("Notas fixas: ", notasFixas)
+        // console.log("Quanto Falta: ", (quantoFalta - notasFixas) / 2)
+
+        // return { ...newState }
     }
 
     return newState

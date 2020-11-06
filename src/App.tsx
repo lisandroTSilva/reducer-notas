@@ -13,13 +13,13 @@ function getDados(): IReducerState {
                 id: 1,
                 descricao: "1º Bimestre",
                 fechado: true,
-                valor: 5
+                valor: 0
             },
             {
                 id: 2,
                 descricao: "2º Bimestre",
                 fechado: true,
-                valor: 5
+                valor: 0
             },
             {
                 id: 3,
@@ -36,9 +36,9 @@ function getDados(): IReducerState {
         ],
         exame: {
             fechado: false,
-            valor: ""
+            valor: 0
         },
-        media: "",
+        media: 0,
         situacao: ""
     } as IReducerState
 }
@@ -79,9 +79,9 @@ export default function App() {
                 )
             })}
 
-            {state.mostraExame && <strong>Editado</strong>}
+            {/* {state.mostraExame && <strong>Editado</strong>} */}
 
-            <label> Exame {state.exame.valor}</label>
+            {/* <label> Exame {state.exame.valor}</label>
             <input
                 value={state.exame.valor}
                 type="number"
@@ -92,12 +92,15 @@ export default function App() {
                         payload: e.target.value
                     })
                 }}
-            />
+            /> */}
 
-            <div>Media: {state?.media}</div>
+            <div>Media (bimestres): {state?.media}</div>
+            {(state.exame.fechado || state.exame.valor !== 0) && (
+                <div>Exame (mínimo): {state.exame.valor}</div>
+            )}
             <div>Situacao: {state?.situacao}</div>
 
-            <pre>{JSON.stringify(state.exame, null, 2)}</pre>
+            {/* <pre>{JSON.stringify(state.exame, null, 2)}</pre> */}
         </div>
     )
 }
